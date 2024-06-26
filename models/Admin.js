@@ -33,7 +33,6 @@ const adminSchema = new mongoose.Schema({
     },
     profilePicture: {
         type: String,
-        required: false
     },
     role: {
         type: String,
