@@ -9,6 +9,7 @@ const PORT = process.env.PORT;
 const adminRoute = require('./routes/adminRoute');
 const instructorRoute = require('./routes/instructorRoute');
 const studentRoute = require('./routes/studentRoute');
+const reviewRoute = require('./routes/reviewRoute');
 
 
 mongoose.connect(process.env.DATABASE_URL).then(()=> {
@@ -22,9 +23,10 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
 // 2) ROUTES
-app.use('/admin', adminRoute);
-app.use('/instructor', instructorRoute);
-app.use('/student', studentRoute);
+app.use('/api/admin', adminRoute);
+app.use('/api/instructor', instructorRoute);
+app.use('/api/student', studentRoute);
+app.use('/api/reviews', reviewRoute);
 
 
 app.listen(PORT, ()=> console.log(`app listing in port ${PORT}`));

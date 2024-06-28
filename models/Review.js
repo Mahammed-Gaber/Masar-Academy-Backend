@@ -27,5 +27,38 @@ const reviewSchema = new mongoose.Schema({
     }
 });
 
+
+reviewSchema.pre('find', function (next) {
+    this.populate({
+        path: 'student',
+        select: 'name'
+    })
+    next();
+});
+
+reviewSchema.statics.calcAverageRatings = async function (courseId){
+    const stats = await this.aggregate([
+        {
+            $match : {course : courseId}
+        },
+        {
+            $group : {
+                _id : '$course',
+                nRating : {$sum : 1},
+                avgRating : {$avg : '$rating'}
+            }
+        }
+    ]);
+
+    await mongoose.model('Course').findByIdAndUpdate(courseId, {
+        ratingsQuantity : stats[0].nRating,
+        ratingsAverage : stats[0].avgRating
+    })
+};
+
+reviewSchema.post('save', function (){
+    this.constructor.calcAverageRatings(this.course)
+})
+
 const Review = mongoose.model('Review', reviewSchema);
 module.exports = Review;
