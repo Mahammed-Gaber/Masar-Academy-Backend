@@ -1,105 +1,138 @@
 const catchAsync = require("../utils/catchAsync");
-const Admin = require("../models/Admin");
-const jwt = require('jsonwebtoken');
-const { promisify } = require('util');
+const {
+  Admin,
+  validateSignUpAdmin,
+  validateSignInAdmin,
+} = require("../models/Admin");
+const jwt = require("jsonwebtoken");
+const { promisify } = require("util");
 
-const signToken = id => {
-    return jwt.sign({ id }, process.env.JWT_SECRET , {
-        expiresIn : process.env.JWT_EXPIRES_IN
-    })
-}
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
 const createSendToken = (admin, statusCode, res) => {
-    const token = signToken(admin._id);
+  const token = signToken(admin._id);
 
-    res.setHeader('Authorization', `Bearer ${token}`);
+  res.setHeader("Authorization", `Bearer ${token}`);
 
-    admin.password = undefined;
+  admin.password = undefined;
 
-    res.status(statusCode).json({
-        status: 'success',
-        token,
-        data : {
-            admin
-        }
+  res.status(statusCode).json({
+    status: "success",
+    token,
+    data: {
+      admin,
+    },
+  });
+};
+
+/**
+ * @desc     signup
+ * @route   /api/admin/signup
+ * @method   post
+ */
+
+exports.signup = catchAsync(async (req, res) => {
+  //check validation data by Joi
+  let { error } = validateSignUpAdmin(req.body);
+  if (error) {
+    return res.status(404).send(error.message);
+  }
+  // Check if employee already exist
+  const { email } = req.body;
+  let freshAdmin = await Admin.findOne({ email: email });
+  if (freshAdmin) {
+    return res.status(400).json({
+      message: "This Email is already Exist",
     });
-}
+  }
 
-exports.signup = catchAsync (async(req, res) => {
+  const newAdmin = await Admin.create(req.body);
+  newAdmin.password = undefined;
 
-    // Check if employee already exist
-    const {email} = req.body;
+  if (!newAdmin) return res.status(400).send("Error on create Employee!");
 
-    let freshAdmin = await Admin.findOne({ email : email });
-    if (freshAdmin) {
-        return res.status(400).json({
-            message : 'This Email is already Exist'
-        })
-    }
+  res.status(201).json({
+    status: "successful",
+    data: newAdmin,
+  });
+});
 
-    const newAdmin = await Admin.create(req.body);
-    newAdmin.password = undefined;
+/**
+ * @desc     login
+ * @route   /api/admin/login
+ * @method   post
+ */
+exports.login = catchAsync(async (req, res) => {
+  //check validation data by Joi
+  let { error } = validateSignInAdmin(req.body);
+  if (error) {
+    return res.status(404).send(error.message);
+  }
+  const { email, password } = req.body;
 
-    if (!newAdmin) return res.status(400).send('Error on create Employee!');
+  if (!email || !password)
+    return res.status(400).send("Please provide email and password!");
 
-    res.status(201).json({
-        status : 'successful',
-        data : newAdmin
-    });
-})
+  const admin = await Admin.findOne({ email }).select("password");
 
-exports.login = catchAsync (async(req, res) => {
-    const {email, password} = req.body;
+  if (!admin)
+    return res.status(401).send("incorrect email, Please enter correct email!");
 
-    if (!email || !password) return res.status(400).send('Please provide email and password!');
+  if (!(await admin.correctPassword(password, admin.password)))
+    return res
+      .status(401)
+      .send("incorrect password, Please enter correct password!");
 
-    const admin = await Admin.findOne({email}).select('password');
+  createSendToken(admin, 201, res);
+});
 
-    if (!admin)
-        return res.status(401).send('incorrect email, Please enter correct email!');
+exports.protect = catchAsync(async (req, res, next) => {
+  // 1) getting token and check if token exist
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
 
-    if (!(await admin.correctPassword( password, admin.password )))
-        return res.status(401).send('incorrect password, Please enter correct password!');
+  if (!token) {
+    return res.status(401).send("Unauthorized, You are not logged in");
+  }
 
-    createSendToken(admin, 201, res)
-})
+  // 2) verification token so decoded show payload data
+  let decoded;
+  try {
+    decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  } catch (error) {
+    return res.status(500).send(error.message);
+  }
 
-exports.protect = catchAsync(async(req, res, next) => {
-    // 1) getting token and check if token exist
-    let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1]
-    }
+  // 3) we have to check if user still exist
+  const freshUser = await Admin.findById(decoded.id);
+  if (!freshUser)
+    return res.status(400).send("Admin logging does no longer exist");
 
-    if (!token) {
-        return res.status(401).send('Unauthorized, You are not logged in');
-    }
+  // 4) check if user change password after the token was issued
+  if (freshUser.changedPasswordAfter(freshUser.passwordChangedAt, decoded.iat))
+    return res
+      .status(401)
+      .send("Admin resently changed password! Please login again.");
 
-    // 2) verification token so decoded show payload data
-    let decoded;
-    try {
-        decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET)
-    } catch (error) {
-        return res.status(500).send(error.message)
-    }
-
-    // 3) we have to check if user still exist
-    const freshUser = await Admin.findById(decoded.id);
-    if (!freshUser)
-        return res.status(400).send('Admin logging does no longer exist');
-
-    // 4) check if user change password after the token was issued
-    if(freshUser.changedPasswordAfter(freshUser.passwordChangedAt, decoded.iat))
-        return res.status(401).send('Admin resently changed password! Please login again.');
-
-    req.admin = freshUser;
-    next();
-})
+  req.admin = freshUser;
+  next();
+});
 
 exports.restrictTo = (...roles) => {
-    return (req, res, next) => {
-        if (!roles.includes(req.admin.role)) {
-            return res.status(403).send('You do not have permission to perform this action!')
-        }
-        next();
+  return (req, res, next) => {
+    if (!roles.includes(req.admin.role)) {
+      return res
+        .status(403)
+        .send("You do not have permission to perform this action!");
     }
-}
+    next();
+  };
+};
