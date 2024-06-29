@@ -10,6 +10,8 @@ const adminRoute = require('./routes/adminRoute');
 const instructorRoute = require('./routes/instructorRoute');
 const studentRoute = require('./routes/studentRoute');
 const reviewRoute = require('./routes/reviewRoute');
+const courseRoute = require('./routes/courseRoute');
+const categoryRoute = require('./routes/categoryRoute');
 
 
 mongoose.connect(process.env.DATABASE_URL).then(()=> {
@@ -26,7 +28,9 @@ app.use(express.urlencoded({extended: true}));
 app.use('/api/admin', adminRoute);
 app.use('/api/instructor', instructorRoute);
 app.use('/api/student', studentRoute);
-app.use('/api/reviews', reviewRoute);
+app.use('/api/review', reviewRoute);
+app.use('/api/course', courseRoute);
+app.use('/api/category', categoryRoute);
 
 
 app.listen(PORT, ()=> console.log(`app listing in port ${PORT}`));
