@@ -12,3 +12,5 @@ router.use(authAdminController.protect);
 router.post('/', authAdminController.restrictTo('admin', 'super-admin'), categoryController.createCategory);
 router.patch('/update-category/:id', authAdminController.restrictTo('admin', 'super-admin'), categoryController.updateCategory);
 router.delete('/delete-category/:id', authAdminController.restrictTo('super-admin'), categoryController.removeCategory);
+
+module.exports = router;

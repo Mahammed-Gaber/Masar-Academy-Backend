@@ -13,3 +13,5 @@ router.use(authInstructorController.protect)
 router.post('/' , courseController.createCourse);
 router.patch('/update-course/:id' , courseController.updateCourse);
 router.delete('/delete-course/:id' , courseController.removeCourse);
+
+module.exports = router;
