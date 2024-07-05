@@ -4,12 +4,12 @@ const subscriptionSchema = new mongoose.Schema({
     student: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Student',
-        required: true
+        required: [true, 'Subscription must belong to a student!']
     },
     course: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course',
-        required: true
+        required: [true, 'Subscription must belong to a course!']
     },
     enrolledAt: {
         type: Date,

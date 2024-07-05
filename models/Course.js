@@ -35,5 +35,16 @@ const courseSchema = new mongoose.Schema({
     timestamps : true
 });
 
+courseSchema.pre('find', function (next) {
+    this.populate({
+        path : 'instructor',
+        select : 'name'
+    }).populate({
+        path : 'category',
+        select : 'name'
+    })
+    next();
+})
+
 const Course = mongoose.model('Course', courseSchema);
 module.exports = Course;

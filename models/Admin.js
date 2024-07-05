@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
@@ -46,9 +47,13 @@ const adminSchema = new mongoose.Schema({
     updatedAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    passwordChangedAt : Date,
+    passwordResetToken : String,
+    passwordResetExpire : Date,
 });
 
+// Instance Method belong to Model
 adminSchema.pre('save', async function (next) {
     // it run if password is modified to hash it
     if(!this.isModified('password')) return next;
@@ -59,6 +64,13 @@ adminSchema.pre('save', async function (next) {
     // to delete password confirm field
     this.passwordConfirm = undefined;
     next()
+})
+
+// Update passwordChangedAt property for the user when change password
+adminSchema.pre('save', function(next) {
+    if(!this.isModified('password') || this.isNew) return next();
+    this.passwordChangedAt = Date.now() - 1000;
+    next();
 })
 
 adminSchema.methods.correctPassword = async(candedatePassword, userPassword)=> {
@@ -72,6 +84,17 @@ adminSchema.methods.changedPasswordAfter = (passwordChangedAt,JWTTiemstamp) => {
         return changedTimestamp > JWTTiemstamp;
     }
     return false;
+}
+
+// Document Methods belong to document
+adminSchema.methods.createPasswordResetToken = function (){
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    this.passwordResetExpire = Date.now() + 10 * 60 * 1000;
+
+    return resetToken;
 }
 
 const Admin = mongoose.model('Admin', adminSchema);

@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
@@ -34,6 +35,25 @@ const studentSchema = new mongoose.Schema({
     profilePicture: {
         type: String,
     },
+    age: {
+        type: Number,
+        required: true,
+    },
+    country: {
+        type: String,
+        required: true,
+    },
+    gender: {
+        type: String,
+        enum: ['male', 'female'],
+        required: true,
+    },
+    address: {
+        street: String,
+        city: String,
+        state: String,
+        zip: String
+    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -41,7 +61,10 @@ const studentSchema = new mongoose.Schema({
     updatedAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    passwordChangedAt : Date,
+    passwordResetToken : String,
+    passwordResetExpire : Date
 });
 
 studentSchema.pre('save', async function (next) {
@@ -56,6 +79,13 @@ studentSchema.pre('save', async function (next) {
     next()
 })
 
+// Update passwordChangedAt property for the user when change password
+studentSchema.pre('save', function(next) {
+    if(!this.isModified('password') || this.isNew) return next();
+    this.passwordChangedAt = Date.now() - 1000;
+    next();
+})
+
 studentSchema.methods.correctPassword = async(candedatePassword, userPassword)=> {
     return await bcrypt.compare(candedatePassword, userPassword);
 }
@@ -67,6 +97,16 @@ studentSchema.methods.changedPasswordAfter = (passwordChangedAt,JWTTiemstamp) =>
         return changedTimestamp > JWTTiemstamp;
     }
     return false;
+}
+
+studentSchema.methods.createPasswordResetToken = function (){
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    this.passwordResetExpire = Date.now() + 10 * 60 * 1000;
+
+    return resetToken;
 }
 
 const Student = mongoose.model('Student', studentSchema);

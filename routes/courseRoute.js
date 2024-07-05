@@ -5,8 +5,11 @@ const authInstructorController = require('../controllers/authInstructorControlle
 const courseController = require('../controllers/courseController');
 
 
-router.post('/all-courses', courseController.getAllCourses);
+router.get('/all-courses', courseController.getAllCourses);
 router.post('/instructor-courses/:id', courseController.getAllCoursesForInstructor);
+
+router.get('top-rated-courses', courseController.getTopRatedCourses);
+router.get('all-courses-by-category/:id', courseController.getAllCoursesByCategory);
 
 router.use(authInstructorController.protect)
 

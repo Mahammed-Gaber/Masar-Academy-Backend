@@ -41,16 +41,57 @@ exports.getAllCoursesForInstructor = catchAsync( async(req, res) => {
     if (!allCourses || allCourses.length === 0) {
         return res.status(404).json({
             status: 'fail',
-            message: 'No Cources found for this instructor'
+            message: 'No cources were found for this instructor'
         });
     }
 
     res.status(200).json({
         status : 'success',
         results: allCourses.length,
-        bookings : allCourses
+        allCourses
     })
 });
+
+// Get all courses belongs to a category
+exports.getAllCoursesByCategory = catchAsync ( async(req, res)=> {
+    const allCourses = await Course.find({ category : req.params._id });
+
+    if (!allCourses || allCourses.length === 0) {
+        return res.status(404).json({
+            status: 'fail',
+            message: 'No courses were found for this category'
+        });
+    }
+
+    res.status(200).json({
+        status : 'success',
+        results: allCourses.length,
+        allCourses
+    })
+})
+
+// Show top rated courses
+exports.getTopRatedCourses = catchAsync( async(req,res) => {
+
+    const topRatedCourses = await Course.find({
+            ratingsAverage: { $gte: 3.5 }
+        })
+        .sort({ ratingsAverage: -1 })
+        .limit(6)
+        .lean();
+
+    if (!topRatedCourses || topRatedCourses.length === 0) {
+        return res.status(404).json({
+            status: 'fail',
+            message: 'There are no courses with a higher rating yet!'
+        });
+    }
+
+    res.status(200).json({
+        status: 'success',
+        data: topRatedCourses
+    });
+})
 
 exports.updateCourse = catchAsync( async(req, res) => {
 

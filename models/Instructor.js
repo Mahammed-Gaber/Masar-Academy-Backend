@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
@@ -42,6 +43,35 @@ const instructorSchema = new mongoose.Schema({
     specialties: [{
         type: String,
     }],
+    age: {
+        type: Number,
+        required: true,
+    },
+    country: {
+        type: String,
+        required: true,
+    },
+    gender: {
+        type: String,
+        enum: ['male', 'female'],
+        required: true,
+    },
+    // phoneNumber: {
+    //     type: String,
+    //     validate: {
+    //         validator: function(v) {
+    //             return /\d{10}/.test(v);
+    //         },
+    //         message: props => `${props.value} is not a valid phone number!`
+    //     },
+    //     required: [true, 'User phone number required']
+    // },
+    address: {
+        street: String,
+        city: String,
+        state: String,
+        zip: String
+    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -49,7 +79,10 @@ const instructorSchema = new mongoose.Schema({
     updatedAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    passwordChangedAt : Date,
+    passwordResetToken : String,
+    passwordResetExpire : Date
 });
 
 instructorSchema.pre('save', async function (next) {
@@ -64,6 +97,14 @@ instructorSchema.pre('save', async function (next) {
     next()
 })
 
+// Update passwordChangedAt property for the user when change password
+instructorSchema.pre('save', function(next) {
+    if(!this.isModified('password') || this.isNew) return next();
+    this.passwordChangedAt = Date.now() - 1000;
+    next();
+})
+
+
 instructorSchema.methods.correctPassword = async(candedatePassword, userPassword)=> {
     return await bcrypt.compare(candedatePassword, userPassword);
 }
@@ -75,6 +116,16 @@ instructorSchema.methods.changedPasswordAfter = (passwordChangedAt,JWTTiemstamp)
         return changedTimestamp > JWTTiemstamp;
     }
     return false;
+}
+
+instructorSchema.methods.createPasswordResetToken = function (){
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    this.passwordResetExpire = Date.now() + 10 * 60 * 1000;
+
+    return resetToken;
 }
 
 const Instructor = mongoose.model('Instructor', instructorSchema);

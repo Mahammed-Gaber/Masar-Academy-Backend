@@ -4,12 +4,12 @@ const reviewSchema = new mongoose.Schema({
     course: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course',
-        required: true
+        required: [true, 'Review must belong to a course!']
     },
     student: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Student',
-        required: true
+        required: [true, 'Review must belong to a student!']
     },
     rating: {
         type: Number,
