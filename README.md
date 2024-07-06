@@ -36,8 +36,9 @@ Ensure you have the following installed:
 To start the application, run:
 ```sh
 npm start
+```
 
-## API Documentation
+### API Documentation
 
 The server should now be running on the port specified in the .env file. If no port is specified, it defaults to 3000.
 
