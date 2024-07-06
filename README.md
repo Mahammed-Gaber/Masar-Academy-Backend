@@ -54,4 +54,4 @@ Swagger is integrated with MasarAcademy to provide interactive documentation for
 
 - **Testing Endpoints**: Use Swagger UI to test the endpoints by providing required parameters and request bodies.
 
-You can interact with the API directly from your browser using Swagger UI.
+- You can interact with the API directly from your browser using Swagger UI.
