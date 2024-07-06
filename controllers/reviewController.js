@@ -14,7 +14,7 @@ exports.getAllReview = catchAsync(async(req, res) => {
 
 exports.getReviewsForCourse = catchAsync(async(req, res) => {
 
-    const reviews = await Review.find({ course : req.body.course});
+    const reviews = await Review.find({ course : req.params._id});
     if (!reviews || reviews.length === 0) {
         return res.status(404).json({
             status: 'fail',
@@ -31,7 +31,7 @@ exports.getReviewsForCourse = catchAsync(async(req, res) => {
 
 exports.createReview = catchAsync(async(req, res)=> {
 
-    const newReview = await Review.create({...req.body, student : req.student._id});
+    const newReview = await Review.create({...req.body, course : req.params.id, student : req.student._id});
     if (!newReview) {
         return res.status(400).send('faild add new review');
     }
@@ -45,8 +45,11 @@ exports.createReview = catchAsync(async(req, res)=> {
 })
 
 exports.updateReview = catchAsync(async(req, res)=>{
-    let reviewId = req.params
-    const updateOne = await Review.findOneAndUpdate(reviewId, req.body);
+
+    const updateOne = await Review.findOneAndUpdate(req.params.id, req.body, {
+        new : true,
+        runValidators : true
+    });
 
     res.status(200).json({
         updates : 'success',

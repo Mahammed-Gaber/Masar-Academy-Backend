@@ -78,7 +78,7 @@ exports.login = catchAsync(async (req, res) => {
   if (!email || !password)
     return res.status(400).send("Please provide email and password!");
 
-  const admin = await Admin.findOne({ email }).select("password");
+  const admin = await Admin.findOne({ email }).select("password role");
 
   if (!admin)
     return res.status(401).send("incorrect email, Please enter correct email!");
@@ -205,8 +205,8 @@ exports.updatePassword = catchAsync( async(req, res) => {
     }
 
     // If so, update password
-    user.password = req.body.password;
-    user.passwordConfirm = req.body.passwordConfirm;
+    user.password = req.body.newPassword;
+    user.passwordConfirm = req.body.newPasswordConfirm;
     await user.save();
 
     // Log user in, send JWT

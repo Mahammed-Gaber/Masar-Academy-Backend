@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT;
 
+const setupSwagger = require('./utils/swagger');
+
 
 const adminRoute = require('./routes/adminRoute');
 const instructorRoute = require('./routes/instructorRoute');
@@ -24,13 +26,16 @@ mongoose.connect(process.env.DATABASE_URL).then(()=> {
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
-// 2) ROUTES
-app.use('/api/admin', adminRoute);
-app.use('/api/instructor', instructorRoute);
-app.use('/api/student', studentRoute);
-app.use('/api/review', reviewRoute);
-app.use('/api/course', courseRoute);
-app.use('/api/category', categoryRoute);
+// 2) Setup Swagger
+setupSwagger(app);
+
+// 3) ROUTES
+app.use('/v1/api/admin', adminRoute);
+app.use('/v1/api/instructor', instructorRoute);
+app.use('/v1/api/student', studentRoute);
+app.use('/v1/api/review', reviewRoute);
+app.use('/v1/api/course', courseRoute);
+app.use('/v1/api/category', categoryRoute);
 
 
 app.listen(PORT, ()=> console.log(`app listing in port ${PORT}`));

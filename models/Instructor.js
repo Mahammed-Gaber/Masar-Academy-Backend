@@ -56,16 +56,16 @@ const instructorSchema = new mongoose.Schema({
         enum: ['male', 'female'],
         required: true,
     },
-    // phoneNumber: {
-    //     type: String,
-    //     validate: {
-    //         validator: function(v) {
-    //             return /\d{10}/.test(v);
-    //         },
-    //         message: props => `${props.value} is not a valid phone number!`
-    //     },
-    //     required: [true, 'User phone number required']
-    // },
+    phoneNumber: {
+        type: String,
+        validate: {
+            validator: function(v) {
+                return /\d{10}/.test(v);
+            },
+            message: props => `${props.value} is not a valid phone number!`
+        },
+        required: [true, 'User phone number required']
+    },
     address: {
         street: String,
         city: String,

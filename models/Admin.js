@@ -59,7 +59,7 @@ adminSchema.pre('save', async function (next) {
     if(!this.isModified('password')) return next;
 
   // to hashing pass
-  this.password = await bcrypt.hash(this.password, 10);
+    this.password = await bcrypt.hash(this.password, 10);
 
     // to delete password confirm field
     this.passwordConfirm = undefined;
@@ -141,7 +141,7 @@ let validateSignInAdmin = (data) => {
         )
       )
       .messages({
-        "string.pattern.base": `Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character`,
+        "string.pattern.base": `Password minimum 8 characters, at least one uppercase letter, one lowercase letter, one number and one special character`,
         "string.empty": `Password cannot be empty`,
         "any.required": `Password is required`,
       }),
