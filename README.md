@@ -21,7 +21,7 @@ Ensure you have the following installed:
     npm install
     ```
 
-3. Create a `.env` file in the root of the project and add the following environment variables. Update the values as needed:
+3. Update the values ​​in the `.env` file in the project root and modify the following environment variables as needed:
     ```env
     PORT=3000
     DATABASE_URL=mongodb://127.0.0.1:27017/your_DB
